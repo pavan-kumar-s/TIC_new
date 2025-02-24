@@ -1,0 +1,7 @@
+fast_snp - code to get the snp matrix
+getTICModel - This is modified to the previous one to include k
+Recon_nsnp - Nsnp matrix for Recon_TIC model
+Recon_nsnp_all_reversible - Nsnp matrix when all the reactions that are part Recon_TIC model are considered reversible
+Recon_TIC -  A recon model with only the TICs
+Recon3D - Recon3D model
+ThermOptEnumMILP_forward_only - gives all the TICs that are in forward direction only
