@@ -1,4 +1,4 @@
-function [TICs,Direction,TIC_Rxns,modModel,opt] = ThermOptEnumMILP(model,timeLimit)
+function [TICs,Direction,TIC_Rxns,modModel,opt] = ThermOptEnumMILP_rev(model,timeLimit)
 % Enumerates all the Thermodynamically infeasible cycles in a given model
 %
 % USAGE: 
@@ -87,7 +87,7 @@ while ~isempty(model.rxns)
             opt=1;
         end
     end
-    temp_count = 2;
+    
     while 1
         if exist('timeLimit', 'var') && ~isempty(timeLimit)
             if toc>timeLimit
@@ -101,8 +101,7 @@ while ~isempty(model.rxns)
         end
         
         dir=1;
-        [m1,blkdCore,flux] = getTICModel(model,core,tol,dir,getCuurTICcons(TICcons,temp_count),temp_count);
-        temp_count = numel(m1);
+        [m1,blkdCore,flux] = getTICModel(model,core,tol,dir,TICcons);
         if blkdCore
             break
         end
@@ -113,7 +112,31 @@ while ~isempty(model.rxns)
         nTICcons =nTICcons+1;
         TICcons{nTICcons,1} = ids;
     end
-    
+    [nTICcons,TICcons,TICs,Direction] = getReverseTIC(TICcons,TICs,Direction,model);
+    i = numel(TICs)+1;
+    while 1
+        if exist('timeLimit', 'var') && ~isempty(timeLimit)
+            if toc>timeLimit
+                opt=0;
+                TICs=[];Direction=[];TIC_Rxns=[];modModel=[];
+                warning('TimeLimitReached')
+                return 
+            else
+                opt=1;
+            end
+        end
+        dir=-1;
+        [m1,blkdCore,flux] = getTICModel(model,core,tol,dir,TICcons);
+        if blkdCore
+            break
+        end
+        TICs{i,1} = m1; 
+        ids =find(ismember(model.rxns,m1));
+        Direction{i,1} =flux(ids)/min(abs(flux(ids)));
+        i=i+1;
+        nTICcons =nTICcons+1;
+        TICcons{nTICcons,1} = ids;
+    end
     model.lb(core) = 0;model.ub(core) = 0;
     if exist('sprintcc','file')
         a = sprintcc(model,tol); 
@@ -125,34 +148,23 @@ while ~isempty(model.rxns)
     model = removeRxns(model,rmRXNS);
     RXNS = RXNS(~ismember(RXNS,rmRXNS));
 end
-[TICs,Direction]= getUniqueTICs(TICs,Direction);
-
 end
 
-function temp_TICcons = getCuurTICcons(TICcons, temp_count)
-    temp_TICcons ={};
-    c=0;
-    for i=1:numel(TICcons)
-        if numel(TICcons{i})>=temp_count
-            c=c+1;
-            temp_TICcons{c,1} =  TICcons{i};
-        end
-    end
-end
 
-function [TICs,Direction]= getUniqueTICs(pTICs,pDirection)
-TICs{1,1} = pTICs{1,1};
-Direction{1,1} = pDirection{1,1};
-cache{1,1} = strjoin(sort(pTICs{1,1}));
-i=2;
-for j=2:numel(pTICs)
-    temp_cache = strjoin(sort(pTICs{j,1}));
-    if ~contains(temp_cache,cache)
-        cache{i,1} = temp_cache;
-        TICs{i,1} = pTICs{j,1};
-        Direction{i,1} = pDirection{j,1};
-        i=i+1;
-    end
+function [nTICcons,TICcons,TICs,Direction] = getReverseTIC(pTICcons,TICs,Direction,model)
+cache = cellfun(@(x)strjoin(sort(x)),TICs,'UniformOutput',false);
+TICcons={};nTICcons=0;
+k = numel(TICs)+1;
+for t =1:numel(pTICcons)
+    if sum(model.rev(pTICcons{t,1}))==numel(pTICcons{t,1})
+        % all the reactions are reversible hence the reverse TIC has to be
+        % there
+        id = find(ismember(cache,strjoin(sort(model.rxns(pTICcons{t,1})))));
+        TICs{k,1} = TICs{id,1};
+        Direction{k,1} = -1*Direction{id,1};
+        k=k+1;
+        nTICcons = nTICcons+1;
+        TICcons{nTICcons,1} = pTICcons{t,1};
+    end   
 end
 end
-        

@@ -101,8 +101,8 @@ while ~isempty(model.rxns)
         end
         
         dir=1;
-        [m1,blkdCore,flux] = getTICModel(model,core,tol,dir,getCuurTICcons(TICcons),temp_count);
-        temp_count = numel(m1.rxns);
+        [m1,blkdCore,flux] = getTICModel(model,core,tol,dir,getCuurTICcons(TICcons,temp_count),temp_count);
+        temp_count = numel(m1);
         if blkdCore
             break
         end
@@ -125,15 +125,21 @@ while ~isempty(model.rxns)
     model = removeRxns(model,rmRXNS);
     RXNS = RXNS(~ismember(RXNS,rmRXNS));
 end
+[TICs,Direction]= getUniqueTICs(TICs,Direction);
+
 end
 
-function temp_TICcons = getCuurTICcons(TICcons)
+function temp_TICcons = getCuurTICcons(TICcons, temp_count)
     temp_TICcons ={};
     c=0;
     for i=1:numel(TICcons)
-        
-
-TICcons{nTICcons,1} = ids;
-
-
+        if numel(TICcons{i})>=temp_count
+            c=c+1;
+            temp_TICcons{c,1} =  TICcons{i};
+        end
+    end
 end
+
+function [TICs,Direction]= getUniqueTICs(pTICs,pDirection)
+
+TICs{

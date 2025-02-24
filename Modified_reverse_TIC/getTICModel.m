@@ -1,22 +1,15 @@
-function [m1,blkdCore,flux,stat] = getTICModel(model,core,tol,dir,TICcons,k)
-
-
-if ~exist('k', 'var')
-     k=0;
-end
-
-
+function [m1,blkdCore,flux,stat] = getTICModel(model,core,tol,dir,TICcons)
 [~,n] = size(model.S); % number of metabolites and reactions
 
 direction = zeros(n,1);
 if dir ==1
     % for forward direction
     direction(core)=1;
-    [reacInd,x,stat] = findConsistentReacIDTIC(model,direction,tol,TICcons,k);
+    [reacInd,x,stat] = findConsistentReacIDTIC(model,direction,tol,TICcons);
 elseif dir==-1
     % for reverse direction
     direction(core)=-1;
-    [reacInd,x,stat] = findConsistentReacIDTIC(model,direction,tol,TICcons,k);
+    [reacInd,x,stat] = findConsistentReacIDTIC(model,direction,tol,TICcons);
 end
 
 if stat~=1
@@ -32,7 +25,7 @@ end
 
 
 
-function [reacInd,x,stat] = findConsistentReacIDTIC(model,direction,tol,TICcons,k)
+function [reacInd,x,stat] = findConsistentReacIDTIC(model,direction,tol,TICcons)
 
 [m,n] = size(model.S);
 dir0 = direction==0;
@@ -42,17 +35,15 @@ f = [zeros(n,1);ones(n_,1)];
 
 % equalities
 Aeq = [model.S, sparse(m,n_)];
-
-beq = [zeros(m,1)];
+beq = zeros(m,1);
 csenseeq = repmat('E',m,1); % equality
 
 % inequalities
 temp1 = speye(n);
 temp2 = -1*spdiag(model.lb(dir0));
 Aineq1 = [temp1(dir0,:),temp2];
-Aineq1 = [Aineq1;f'];
-bineq1 = [zeros(n_,1);k-1];
-csenseineq1 = repmat('G',n_+1,1); % greater than
+bineq1 = zeros(n_,1);
+csenseineq1 = repmat('G',n_,1); % greater than
 
 temp2 = -1*spdiag(model.ub(dir0));
 Aineq2 = [temp1(dir0,:),temp2];
