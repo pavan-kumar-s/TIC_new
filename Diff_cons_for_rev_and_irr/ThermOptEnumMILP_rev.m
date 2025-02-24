@@ -31,7 +31,7 @@ temp = model.ub(IrR);
 model.S(:,IrR) = -model.S(:,IrR);
 model.ub(IrR) = -1*model.lb(IrR);
 model.lb(IrR) = -1*temp;
-rev = ones(n,1);
+rev = true(n,1);
 rev(model.lb>=0) = 0;
 model.rev=rev;
 % converting all the positive lower bounds to zero lower bounds
@@ -87,7 +87,7 @@ while ~isempty(model.rxns)
             opt=1;
         end
     end
-    
+    temp_count=2;
     while 1
         if exist('timeLimit', 'var') && ~isempty(timeLimit)
             if toc>timeLimit
@@ -101,7 +101,8 @@ while ~isempty(model.rxns)
         end
         
         dir=1;
-        [m1,blkdCore,flux] = getTICModel(model,core,tol,dir,TICcons);
+        [m1,blkdCore,flux] = getTICModel(model,core,tol,dir,getCurrTICcons(TICcons,temp_count),temp_count);
+        temp_count = numel(m1);
         if blkdCore
             break
         end
@@ -115,6 +116,7 @@ while ~isempty(model.rxns)
     end
     [nTICcons,TICcons,TICs,Direction] = getReverseTIC(TICcons,TICs,Direction,model);
     i = numel(TICs)+1;
+    temp_count=2;
     while 1
         if exist('timeLimit', 'var') && ~isempty(timeLimit)
             if toc>timeLimit
@@ -127,7 +129,8 @@ while ~isempty(model.rxns)
             end
         end
         dir=-1;
-        [m1,blkdCore,flux] = getTICModel(model,core,tol,dir,TICcons);
+        [m1,blkdCore,flux] = getTICModel(model,core,tol,dir,getCurrTICcons(TICcons,temp_count),temp_count);
+        temp_count = numel(m1);
         if blkdCore
             break
         end
@@ -169,4 +172,15 @@ for t =1:numel(pTICcons)
         TICcons{nTICcons,1} = pTICcons{t,1};
     end   
 end
+end
+
+function temp_TICcons = getCurrTICcons(TICcons, temp_count)
+    temp_TICcons ={};
+    c=0;
+    for i=1:numel(TICcons)
+        if numel(TICcons{i})>=temp_count
+            c=c+1;
+            temp_TICcons{c,1} =  TICcons{i};
+        end
+    end
 end
