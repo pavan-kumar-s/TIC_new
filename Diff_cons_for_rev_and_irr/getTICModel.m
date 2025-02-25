@@ -42,7 +42,11 @@ csenseeq = repmat('E',m,1); % equality
 % inequalities for irreversible reactions
 temp1 = speye(n);
 temp2 = -eps*spdiag(ones(sum(dir0),1));
-Aineq1 = [temp1(dir0 & ~model.rev,:),temp2(~model.rev(dir0),:),sparse(sum(dir0 & ~model.rev),n_rev)];
+try
+    Aineq1 = [temp1(dir0 & ~model.rev,:),temp2(~model.rev(dir0),:),sparse(sum(dir0 & ~model.rev),n_rev)];
+catch
+    asd=1;
+end
 bineq1 = zeros(sum(dir0 & ~model.rev),1);
 csenseineq1 = repmat('G',sum(dir0 & ~model.rev),1); % greater than
 
