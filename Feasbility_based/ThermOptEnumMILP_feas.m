@@ -151,7 +151,7 @@ while ~isempty(model.rxns)
         a = fastcc(model,tol,0);
     end
 
-    rmRXNS = model.rxns(setdiff([1:numel(model.rxns)],a));
+    rmRXNS = model.rxns(setdiff(1:numel(model.rxns),a));
     model = removeRxns(model,rmRXNS);
     RXNS = RXNS(~ismember(RXNS,rmRXNS));
 end

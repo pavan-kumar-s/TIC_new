@@ -6,3 +6,6 @@ toc
 tic
 [TICs,Direction] = ThermOptEnumMILP_rev(model);
 toc
+
+[tics1,id1] = sort(cellfun(@(x)strjoin(sort(x)),TICs1,'UniformOutput',false));
+[tics,id] = sort(cellfun(@(x)strjoin(sort(x)),TICs,'UniformOutput',false));

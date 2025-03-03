@@ -1,4 +1,4 @@
-function [m1,blkdCore,flux,stat] = getTICModel2(model,core,tol,dir,TICcons)
+function [allM1,blkdCore,allFlux,stat] = getTICModel2(model,core,tol,dir,TICcons)
 [~,n] = size(model.S); % number of metabolites and reactions
 
 direction = zeros(n,1);
@@ -13,25 +13,20 @@ elseif dir==-1
 end
 
 if stat~=1
-    blkdCore=1;flux={};m1={};
+    blkdCore=1;allFlux={};allM1={};
 else
+    blkdCore=0;
     model2 =removeRxns(model,setdiff(model.rxns,model.rxns(reacInd)));
     direction2 = zeros(numel(model2.rxns),1);
     direction2(ismember(model2.rxns,model.rxns(core)))=dir;
     TICcons2 = getNewTICcons(reacInd,TICcons,model,model2);
     [reacInd2,x,stat] = findConsistentReacIDTIC(model2,direction2,tol,TICcons2);
     allM1{1,1} = model2.rxns(reacInd2); allFlux{1,1} = x(reacInd2);
-    while 1
-        TICcons2{end+1,1} = find(reacInd
-    
-    
-    
-    blkdCore=0;
-    flux = x(reacInd2);
-    m1 = model2.rxns(reacInd2);
+    [allM1_,blkdCore_,allFlux_,stat_] = getTICModel2(model2,ismember(model2.rxns,model.rxns(core)),tol,dir,TICcons2);
+    if blkdCore_~=1
+        allM1 = [allM1;allM1_]; allFlux = [allFlux; allFlux_];
+    end
 end
-
-
 end
 function TICcons2 = getNewTICcons(reacInd,TICcons,model,model2)
 k=1;
@@ -44,7 +39,6 @@ for i=1:numel(TICcons)
     end
 end
 end
-
 
 function [reacInd,x,stat] = findConsistentReacIDTIC(model,direction,tol,TICcons)
 

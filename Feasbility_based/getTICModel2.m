@@ -15,28 +15,19 @@ end
 if stat~=1
     blkdCore=1;allFlux={};allM1={};
 else
+    blkdCore=0;
     model2 =removeRxns(model,setdiff(model.rxns,model.rxns(reacInd)));
     direction2 = zeros(numel(model2.rxns),1);
     direction2(ismember(model2.rxns,model.rxns(core)))=dir;
     TICcons2 = getNewTICcons(reacInd,TICcons,model,model2);
     [reacInd2,x,stat] = findConsistentReacIDTIC(model2,direction2,tol,TICcons2);
     allM1{1,1} = model2.rxns(reacInd2); allFlux{1,1} = x(reacInd2);
-    while 1
-        TICcons2{end+1,1} = find(reacInd2);
-        [reacInd2,x,stat] = findConsistentReacIDTIC(model2,direction2,tol,TICcons2);
-        if stat~=1
-            break
-        else
-            allM1{end+1,1} = model2.rxns(reacInd2); allFlux{end+1,1} = x(reacInd2);
-        end
+    TICcons2{end+1,1} = find(reacInd2);
+    [allM1_,blkdCore_,allFlux_] = getTICModel2(model2,ismember(model2.rxns,model.rxns(core)),tol,dir,TICcons2);
+    if blkdCore_~=1
+        allM1 = [allM1;allM1_]; allFlux = [allFlux; allFlux_];
     end
-    
-    blkdCore=0;
-    flux = x(reacInd2);
-    m1 = model2.rxns(reacInd2);
 end
-
-
 end
 function TICcons2 = getNewTICcons(reacInd,TICcons,model,model2)
 k=1;
@@ -49,7 +40,6 @@ for i=1:numel(TICcons)
     end
 end
 end
-
 
 function [reacInd,x,stat] = findConsistentReacIDTIC(model,direction,tol,TICcons)
 
