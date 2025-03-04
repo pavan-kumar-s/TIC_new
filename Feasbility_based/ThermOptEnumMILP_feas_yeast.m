@@ -1,4 +1,4 @@
-function [TICs,Direction,TIC_Rxns,modModel,opt] = ThermOptEnumMILP_feas(model,timeLimit)
+function [TICs,Direction,TIC_Rxns,modModel,opt] = ThermOptEnumMILP_feas_yeast(model,timeLimit)
 % Enumerates all the Thermodynamically infeasible cycles in a given model
 %
 % USAGE: 
@@ -114,6 +114,7 @@ while ~isempty(model.rxns)
             nTICcons =nTICcons+1;
             TICcons{nTICcons,1} = ids;
         end
+        save('ThermOptEnumYeast9_results.mat')
     end
     [nTICcons,TICcons,TICs,Direction] = getReverseTIC(TICcons,TICs,Direction,model);
     i = numel(TICs)+1;
@@ -129,16 +130,21 @@ while ~isempty(model.rxns)
             end
         end
         dir=-1;
-        [m1,blkdCore,flux] = getTICModel2(model,core,tol,dir,TICcons);
+        [allm1,blkdCore,allflux] = getTICModel2(model,core,tol,dir,TICcons);
         if blkdCore
             break
         end
-        TICs{i,1} = m1; 
-        ids =find(ismember(model.rxns,m1));
-        Direction{i,1} =flux/min(abs(flux));
-        i=i+1;
-        nTICcons =nTICcons+1;
-        TICcons{nTICcons,1} = ids;
+
+        for q =1:numel(allm1)
+            m1 = allm1{q,1}; flux = allflux{q,1};
+            TICs{i,1} = m1; 
+            ids =find(ismember(model.rxns,m1));
+            Direction{i,1} =flux/min(abs(flux));
+            i=i+1;
+            nTICcons =nTICcons+1;
+            TICcons{nTICcons,1} = ids;
+        end
+        save('ThermOptEnumYeast9_results.mat')
     end
     model.lb(core) = 0;model.ub(core) = 0;
     if exist('sprintcc','file')
@@ -147,7 +153,7 @@ while ~isempty(model.rxns)
         a = fastcc(model,tol,0);
     end
 
-    rmRXNS = model.rxns(setdiff([1:numel(model.rxns)],a));
+    rmRXNS = model.rxns(setdiff(1:numel(model.rxns),a));
     model = removeRxns(model,rmRXNS);
     RXNS = RXNS(~ismember(RXNS,rmRXNS));
 end
