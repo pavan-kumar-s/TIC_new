@@ -114,6 +114,7 @@ while ~isempty(model.rxns)
             nTICcons =nTICcons+1;
             TICcons{nTICcons,1} = ids;
         end
+        save('ThermOptEnumRecon3D_results')
     end
     [nTICcons,TICcons,TICs,Direction] = getReverseTIC(TICcons,TICs,Direction,model);
     i = numel(TICs)+1;
@@ -143,6 +144,7 @@ while ~isempty(model.rxns)
             nTICcons =nTICcons+1;
             TICcons{nTICcons,1} = ids;
         end
+        save('ThermOptEnumRecon3D_results')
     end
     model.lb(core) = 0;model.ub(core) = 0;
     if exist('sprintcc','file')
