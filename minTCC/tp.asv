@@ -1,0 +1,30 @@
+pth = 'D:\OneDrive - smail.iitm.ac.in\SprintCore\TIC\deleteit_2\TIC_new\minTIC\models\';
+models = {'STM_v1_0','e_coli_core','iAB_RBC_283','iAF1260','iAF1260b','iAF692','iAF987'};
+for m=1:numel(models)
+    load(['pth',models{m}]);
+    [minFlux, maxFlux] = fluxVariability(model,'allowLoops', 0);
+    [a,modModel] = ThermOptCC(model,1e-4);
+end
+
+function a1 = getfeasFluxDir(mi,ma)
+a1={};
+for i =1:numel(mi)
+    if mi<0 && ma>0
+        a1{i} = 'Reversible';
+    elseif mi>=0 && ma>0
+        a1{i} = 'Forward';
+    elseif mi<0 && ma<=0
+        a1{i} = 'Reverse
+        
+        
+        
+        if sum(temp)==2
+    consDir = 'Reversible'; % consistent in both the direction
+elseif sum(temp)==0
+    consDir = 'Blocked'; % blocked reaction
+elseif temp(1)==1
+    consDir = 'Forward'; % consistent only in forward direction
+elseif temp(2)==1
+    consDir = 'Reverse'; % consistent only in reverse direction
+end
+    

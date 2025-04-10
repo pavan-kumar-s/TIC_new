@@ -41,7 +41,7 @@ model.ub(abs(model.ub)==temp2) = sign(model.ub(abs(model.ub)==temp2))*10000;
 % direction
 [modelIrrev, ~, rev2irrev] = convertToIrreversible(model);
 [~,n] = size(modelIrrev.S);
-[nullity,a] = getNullSpaceAndTICrxns(modelIrrev);
+[nullity,a] = getNullSpaceAndTICrxns(modelIrrev,tol);
 
 core = 1:n; newCore = [];
 while numel(core)~=numel(newCore)
@@ -145,7 +145,7 @@ end
 end
 
 
-function [nullity,a] = getNullSpaceAndTICrxns(model)
+function [nullity,a] = getNullSpaceAndTICrxns(model,vTol)
 model_temp = model;
 ind=findExcRxns(model_temp);
 
@@ -161,5 +161,8 @@ end
 % model with only TICs
 model_temp = removeRxns(model,model.rxns(setdiff([1:numel(model.rxns)],a)));
 [~,a] = ismember(model_temp.rxns,model.rxns);
-nullity = null(model_temp.S);
+% nullity = null(model_temp.S);
+
+
+nullity = fast_snp(model_temp.S,model_temp.lb,model_temp.ub,vTol);
 end
