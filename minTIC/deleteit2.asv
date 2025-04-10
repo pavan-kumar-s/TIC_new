@@ -1,0 +1,49 @@
+p=dir('./models');
+p={p(3:end).name}';
+tics = {};
+for i=1:numel(p)
+    load(['./models/',p{i}])
+    tics{i} = ThermOptEnumMILP_minimal(model);
+    temp = tics{i};
+    for t =1:numel(temp)
+        tempS = model.S(:,ismember(model.rxns,temp{t}));
+        if numel(temp{t})-rank(tempS)~=1
+            sad=1 %% to demtify the TIC 
+        end
+    end
+    
+end
+
+function model = getTICmodel(model)
+[~,n] = size(model.S); % number of metabolites and reactions
+IrR = model.ub<=0; % reactions irreversible in reverse direction
+temp = model.ub(IrR);
+model.S(:,IrR) = -model.S(:,IrR);
+model.ub(IrR) = -1*model.lb(IrR);
+model.lb(IrR) = -1*temp;
+rev = ones(n,1);
+rev(model.lb>=0) = 0;
+model.rev=rev;
+% converting all the positive lower bounds to zero lower bounds
+model.lb(model.lb>0)=0;
+
+% normalising the bounds to max of 1000
+temp1 = max(abs(model.lb));
+temp2 = max(abs(model.ub));
+model.lb(abs(model.lb)==temp1) = sign(model.lb(abs(model.lb)==temp1))*1000;
+model.ub(abs(model.ub)==temp2) = sign(model.ub(abs(model.ub)==temp2))*1000;
+
+tol=1;
+ind=findExcRxns(model);
+% blocking all the exchange reactions
+model.lb(ind) = 0; model.ub(ind) = 0;
+
+if exist('sprintcc','file')
+    a = sprintcc(model,tol); 
+else
+    a = fastcc(model,tol);
+end
+
+% model with only TICs
+model = removeRxns(model,model.rxns(setdiff([1:numel(model.rxns)],a)));
+end
