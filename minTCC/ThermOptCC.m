@@ -70,69 +70,63 @@ end
 function reacInd = findConsistentIDS(model,core,nullity,a,tol)
 [m,n] = size(model.S);
 n_TICR = numel(a);
+n_c = numel(core);
 K=1000;
-% order of decision variables: v (\in R^n), z (\in R^n), mu (\in
-% R^n_TICR), eps (\in B^n_TICR)
+% order of decision variables: v (\in R^n), z (\in R^c), eps (\in B^n_TICR), 
+% mu (\in R^n_TICR)
 
 % objective
-f = [zeros(n,1);double(ismember([1:n]',core));zeros(2*n_TICR,1)];
+f = [one(n,1);ones(n_c,1);zeros(2*n_TICR,1)];
 
 % equalities
-Aeq1 = [model.S, sparse(m,n+2*n_TICR)];
+Aeq1 = [model.S, sparse(m,n_c+2*n_TICR)];
 beq1 = zeros(m,1);
 csenseeq1 = repmat('E',m,1); % equality
 
 % inequalities
 temp1 = -1*speye(n);
-temp2 = speye(n);
-Aineq1 = [temp1,temp2,sparse(n,2*n_TICR)];
-bineq1 = zeros(n,1);
-csenseineq1 = repmat('L',n,1); % lesser than
+temp2 = speye(n_c);
+Aineq1 = [temp1(core,:),temp2,sparse(n_c,2*n_TICR)];
+bineq1 = zeros(n_c,1);
+csenseineq1 = repmat('L',n_c,1); % lesser than
 
 % equalities
 k = size(nullity,2);
-Aeq2 = [sparse(k,2*n),nullity',sparse(k,n_TICR)];
+Aeq2 = [sparse(k,n+n_c),sparse(k,n_TICR),nullity'];
 beq2 = zeros(k,1);
 csenseeq2 = repmat('E',k,1); % equality
 
 % inequalities
-Aineq2 = [sparse(n_TICR,2*n),speye(n_TICR),(K+1)*speye(n_TICR)];
-bineq2 = ones(n_TICR,1);
-csenseineq2 = repmat('G',n_TICR,1); % lesser than
+Aineq2 = [sparse(n_TICR,n+n_c),(K+1)*speye(n_TICR),speye(n_TICR)];
+bineq2 = K*ones(n_TICR,1);
+csenseineq2 = repmat('L',n_TICR,1); % lesser than
 
 % inequalities
-Aineq3 = [sparse(n_TICR,2*n),speye(n_TICR),(K+1)*speye(n_TICR)];
-bineq3 = K*ones(n_TICR,1);
-csenseineq3 = repmat('L',n_TICR,1); % lesser than
-
-% inequalities
-temp = -1*speye(n);
-temp = temp(a,:);
-Aineq4 = [temp,sparse(n_TICR,n+n_TICR),K*speye(n_TICR)];
-bineq4 = K*ones(n_TICR,1);
-csenseineq4 = repmat('L',n_TICR,1); % lesser than
+Aineq3 = [sparse(n_TICR,n+n_c),(K+1)*speye(n_TICR),speye(n_TICR)];
+bineq3 = ones(n_TICR,1);
+csenseineq3 = repmat('G',n_TICR,1); % lesser than
 
 % inequalities
 temp = -1*speye(n);
 temp = temp(a,:);
-Aineq5 = [temp,sparse(n_TICR,n+n_TICR),K*speye(n_TICR)];
-bineq5 = zeros(n_TICR,1);
-csenseineq5 = repmat('G',n_TICR,1); % lesser than
+Aineq4 = [temp,sparse(n_TICR,n_c),K*speye(n_TICR),sparse(n_TICR,n_TICR)];
+bineq4 = zeros(n_TICR,1);
+csenseineq4 = repmat('G',n_TICR,1); % lesser than
 
 
 % bounds
-lb = [model.lb;zeros(n,1);-K*ones(n_TICR,1);zeros(n_TICR,1)];
-ub = [model.ub;tol*ones(n,1);K*ones(n_TICR,1);ones(n_TICR,1)];
+lb = [model.lb;zeros(n_c,1);zeros(n_TICR,1);-K*ones(n_TICR,1)];
+ub = [model.ub;tol*ones(n_c,1);ones(n_TICR,1);K*ones(n_TICR,1)];
 
 % Set up MILP problem
-MILPproblem.A=[Aeq1;Aeq2;Aineq1;Aineq2;Aineq3;Aineq4;Aineq5];
-MILPproblem.b=[beq1;beq2;bineq1;bineq2;bineq3;bineq4;bineq5];
+MILPproblem.A=[Aeq1;Aeq2;Aineq1;Aineq2;Aineq3;Aineq4];
+MILPproblem.b=[beq1;beq2;bineq1;bineq2;bineq3;bineq4];
 MILPproblem.lb=lb;
 MILPproblem.ub=ub;
 MILPproblem.c=f;
 MILPproblem.osense=-1;%maximise
-MILPproblem.vartype = [repmat('C',2*n+n_TICR,1);repmat('B',n_TICR,1)];
-MILPproblem.csense = [csenseeq1; csenseeq2; csenseineq1; csenseineq2; csenseineq3; csenseineq4; csenseineq5];
+MILPproblem.vartype = [repmat('C',n+n_c,1);repmat('B',n_TICR,1);repmat('C',n_TICR,1)];
+MILPproblem.csense = [csenseeq1; csenseeq2; csenseineq1; csenseineq2; csenseineq3; csenseineq4];
 solution = solveCobraMILP(MILPproblem);
 stat=solution.stat;
 if stat~=1

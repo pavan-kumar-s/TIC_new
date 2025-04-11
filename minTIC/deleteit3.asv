@@ -1,7 +1,0 @@
-temp = null(mm.S);
-TICmat = getTICmat(tics{6},Dir{6},mm.rxns);
-is=[];
-for i=1:size(TICmat,2)
-   [temp,TICmat(:,i)]
-end
-    
